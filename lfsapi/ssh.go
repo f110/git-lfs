@@ -118,7 +118,6 @@ func sshGetLFSExeAndArgs(osEnv config.Environment, e Endpoint, method string) (s
 // Base args includes port settings, user/host, everything pre the command to execute
 func sshGetExeAndArgs(osEnv config.Environment, e Endpoint) (exe string, baseargs []string) {
 	isPlink := false
-	isTortoise := false
 
 	ssh, _ := osEnv.Get("GIT_SSH")
 	sshCmd, _ := osEnv.Get("GIT_SSH_COMMAND")
@@ -139,8 +138,7 @@ func sshGetExeAndArgs(osEnv config.Environment, e Endpoint) (exe string, basearg
 		if ext := filepath.Ext(basessh); len(ext) > 0 {
 			basessh = basessh[:len(basessh)-len(ext)]
 		}
-		isPlink = strings.EqualFold(basessh, "plink")
-		isTortoise = strings.EqualFold(basessh, "tortoiseplink")
+		isPlink = strings.EqualFold(basessh, "plink") || strings.EqualFold(basessh, "tortoiseplink")
 	}
 
 	args := make([]string, 0, 5+len(cmdArgs))
@@ -148,13 +146,12 @@ func sshGetExeAndArgs(osEnv config.Environment, e Endpoint) (exe string, basearg
 		args = append(args, cmdArgs...)
 	}
 
-	if isTortoise {
-		// TortoisePlink requires the -batch argument to behave like ssh/plink
+	if isPlink {
 		args = append(args, "-batch")
 	}
 
 	if len(e.SshPort) > 0 {
-		if isPlink || isTortoise {
+		if isPlink {
 			args = append(args, "-P")
 		} else {
 			args = append(args, "-p")
